@@ -10,17 +10,19 @@ const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWl
 
 // Helper function to handle image errors safely
 function handleImageError(img) {
-    if (img.src !== PLACEHOLDER_IMAGE) {
+    if (!img.dataset.fallback) {
+        img.dataset.fallback = true;
         img.src = PLACEHOLDER_IMAGE;
     } else {
         img.style.display = 'none';
         const placeholder = document.createElement('div');
         placeholder.className = 'image-placeholder';
-        placeholder.style.cssText = 'width: 100%; height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999; font-size: 14px; border-radius: 5px;';
         placeholder.textContent = 'No Image Available';
+        placeholder.style.cssText = 'width: 100%; height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999; font-size: 14px; border-radius: 5px;';
         img.parentElement.appendChild(placeholder);
     }
 }
+
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function () {
