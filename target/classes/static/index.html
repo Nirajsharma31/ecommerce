@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcommerceAI - Online Shopping</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <h1 class="nav-logo">EcommerceAI</h1>
+                <ul class="nav-menu">
+                    <li><a href="#home" onclick="showSection('home')">Home</a></li>
+                    <li><a href="#products" onclick="showSection('products')">Products</a></li>
+                    <li><a href="#cart" onclick="showSection('cart')">Cart (<span id="cart-count">0</span>)</a></li>
+                    <li><a href="#login" id="login-link" onclick="showSection('login')">Login</a></li>
+                    <li><a href="#register" id="register-link" onclick="showSection('register')">Register</a></li>
+                    <li><a href="#" id="logout-link" onclick="logout()" style="display: none;">Logout</a></li>
+                    <li><a href="#admin" id="admin-link" onclick="showSection('admin')" style="display: none;">Admin</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Home Section -->
+        <section id="home" class="section active">
+            <div class="hero">
+                <h2>Welcome to EcommerceAI</h2>
+                <p>Your one-stop shop for all your needs</p>
+                <button onclick="showSection('products')" class="btn btn-primary">Shop Now</button>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section id="products" class="section">
+            <h2>Our Products</h2>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search products...">
+                <button onclick="searchProducts()" class="btn">Search</button>
+                <button onclick="loadProducts()" class="btn">Show All</button>
+            </div>
+            <div id="products-container" class="products-grid">
+                <!-- Products will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Cart Section -->
+        <section id="cart" class="section">
+            <h2>Shopping Cart</h2>
+            <div id="cart-container">
+                <!-- Cart items will be loaded here -->
+            </div>
+            <div class="cart-total">
+                <h3>Total: $<span id="cart-total">0.00</span></h3>
+                <button onclick="checkout()" class="btn btn-primary">Checkout</button>
+            </div>
+        </section>
+
+        <!-- Login Section -->
+        <section id="login" class="section">
+            <div class="form-container">
+                <h2>Login</h2>
+                <form id="login-form">
+                    <input type="text" id="login-username" placeholder="Username" required>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+                <p>Don't have an account? <a href="#" onclick="showSection('register')">Register here</a></p>
+            </div>
+        </section>
+
+        <!-- Register Section -->
+        <section id="register" class="section">
+            <div class="form-container">
+                <h2>Register</h2>
+                <form id="register-form">
+                    <input type="text" id="register-username" placeholder="Username" required>
+                    <input type="email" id="register-email" placeholder="Email" required>
+                    <input type="password" id="register-password" placeholder="Password" required>
+                    <input type="text" id="register-fullname" placeholder="Full Name" required>
+                    <input type="text" id="register-address" placeholder="Address">
+                    <input type="text" id="register-phone" placeholder="Phone Number">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </form>
+                <p>Already have an account? <a href="#" onclick="showSection('login')">Login here</a></p>
+            </div>
+        </section>
+
+        <!-- Checkout Section -->
+        <section id="checkout" class="section">
+            <div class="form-container">
+                <h2>Checkout</h2>
+                <form id="checkout-form">
+                    <input type="text" id="shipping-address" placeholder="Shipping Address" required>
+                    <select id="payment-method" required>
+                        <option value="">Select Payment Method</option>
+                        <option value="CREDIT_CARD">Credit Card</option>
+                        <option value="DEBIT_CARD">Debit Card</option>
+                        <option value="PAYPAL">PayPal</option>
+                        <option value="CASH_ON_DELIVERY">Cash on Delivery</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Place Order</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Admin Section -->
+        <section id="admin" class="section">
+            <h2>Admin Dashboard</h2>
+            
+            <!-- Dashboard Stats -->
+            <div id="dashboard-stats" class="dashboard-section">
+                <!-- Stats will be loaded here -->
+            </div>
+            
+            <div class="admin-tabs">
+                <button onclick="showAdminTab('dashboard')" class="tab-btn active">Dashboard</button>
+                <button onclick="showAdminTab('products')" class="tab-btn">Manage Products</button>
+                <button onclick="showAdminTab('orders')" class="tab-btn">Manage Orders</button>
+            </div>
+            
+            <div id="admin-dashboard" class="admin-tab active">
+                <h3>Quick Actions</h3>
+                <div class="quick-actions">
+                    <button onclick="showAdminTab('products')" class="btn btn-primary">Add New Product</button>
+                    <button onclick="showAdminTab('orders')" class="btn">View All Orders</button>
+                    <button onclick="loadLowStockProducts()" class="btn">Check Low Stock</button>
+                </div>
+                
+                <div id="low-stock-products" class="low-stock-section">
+                    <!-- Low stock products will be loaded here -->
+                </div>
+            </div>
+            
+            <div id="admin-products" class="admin-tab">
+                <h3>Add New Product</h3>
+                <form id="add-product-form" class="product-form">
+                    <div class="form-row">
+                        <input type="text" id="product-name" placeholder="Product Name" required>
+                        <input type="text" id="product-brand" placeholder="Brand">
+                    </div>
+                    <textarea id="product-description" placeholder="Product Description"></textarea>
+                    <div class="form-row">
+                        <input type="number" id="product-price" placeholder="Price ($)" step="0.01" required>
+                        <input type="number" id="product-stock" placeholder="Stock Quantity" required>
+                    </div>
+                    <div class="form-row">
+                        <select id="product-category" required>
+                            <option value="">Select Category</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Clothing">Clothing</option>
+                            <option value="Home & Garden">Home & Garden</option>
+                            <option value="Books">Books</option>
+                            <option value="Sports">Sports</option>
+                        </select>
+                        <input type="url" id="product-image" placeholder="Image URL">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Product</button>
+                </form>
+                
+                <h3>Existing Products</h3>
+                <div class="search-products">
+                    <input type="text" id="admin-search" placeholder="Search products...">
+                    <button onclick="searchAdminProducts()" class="btn">Search</button>
+                </div>
+                <div id="admin-products-list"></div>
+            </div>
+            
+            <div id="admin-orders" class="admin-tab">
+                <h3>Order Management</h3>
+                <div class="order-filters">
+                    <select id="order-status-filter" onchange="filterOrdersByStatus()">
+                        <option value="">All Orders</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="CONFIRMED">Confirmed</option>
+                        <option value="SHIPPED">Shipped</option>
+                        <option value="DELIVERED">Delivered</option>
+                        <option value="CANCELLED">Cancelled</option>
+                    </select>
+                    <button onclick="loadAdminOrders()" class="btn">Refresh</button>
+                </div>
+                <div id="admin-orders-list"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
