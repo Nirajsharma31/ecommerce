@@ -55,7 +55,20 @@ public class UserService {
     
     public boolean authenticateUser(String username, String password) {
         Optional<User> user = findByUsername(username);
-        return user.isPresent() && passwordEncoder.matches(password, user.get().getPassword());
+        if (!user.isPresent()) {
+            System.out.println("UserService: User not found for username: " + username);
+            return false;
+        }
+        
+        User foundUser = user.get();
+        System.out.println("UserService: Found user: " + foundUser.getUsername());
+        System.out.println("UserService: Stored password hash: " + foundUser.getPassword().substring(0, 10) + "...");
+        System.out.println("UserService: Input password: " + password);
+        
+        boolean matches = passwordEncoder.matches(password, foundUser.getPassword());
+        System.out.println("UserService: Password matches: " + matches);
+        
+        return matches;
     }
     
     public boolean isAdmin(Long userId) {

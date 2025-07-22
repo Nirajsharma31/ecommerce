@@ -26,16 +26,90 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
     
-    @PostMapping("/register")
-    public ResponseEntity<Map<String, Object>> registerUser(@Valid @RequestBody User user) {
+    @PostMapping("/simple-register")
+    public ResponseEntity<Map<String, Object>> simpleRegister(@RequestBody Map<String, String> requestData) {
         Map<String, Object> response = new HashMap<>();
         try {
-            // Debug logging
-            System.out.println("Registration attempt for user: " + user.getUsername());
-            System.out.println("Email: " + user.getEmail());
-            System.out.println("Full Name: " + user.getFullName());
+            System.out.println("Simple registration attempt with data: " + requestData);
+            
+            // Create user manually without validation
+            User user = new User();
+            user.setUsername(requestData.get("username"));
+            user.setEmail(requestData.get("email"));
+            user.setPassword(requestData.get("password"));
+            user.setFullName(requestData.get("fullName"));
+            user.setAddress(requestData.get("address"));
+            user.setPhoneNumber(requestData.get("phoneNumber"));
+            
+            System.out.println("Created user object: " + user.getUsername());
             
             User savedUser = userService.registerUser(user);
+            response.put("message", "User registered successfully via simple endpoint");
+            response.put("user", Map.of(
+                "id", savedUser.getId(),
+                "username", savedUser.getUsername(),
+                "email", savedUser.getEmail(),
+                "fullName", savedUser.getFullName(),
+                "role", savedUser.getRole()
+            ));
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.out.println("Simple registration error: " + e.getMessage());
+            e.printStackTrace();
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    @PostMapping("/register")
+    public ResponseEntity<Map<String, Object>> registerUser(@RequestBody Map<String, String> requestData) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            System.out.println("=== REGISTRATION ATTEMPT ===");
+            System.out.println("Received data: " + requestData);
+            
+            // Manual validation with clear error messages
+            String username = requestData.get("username");
+            String email = requestData.get("email");
+            String password = requestData.get("password");
+            String fullName = requestData.get("fullName");
+            
+            // Basic validation
+            if (username == null || username.trim().length() < 2) {
+                response.put("error", "Username must be at least 2 characters");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (email == null || !email.contains("@")) {
+                response.put("error", "Please enter a valid email address");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (password == null || password.length() < 3) {
+                response.put("error", "Password must be at least 3 characters");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (fullName == null || fullName.trim().length() < 2) {
+                response.put("error", "Full name must be at least 2 characters");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // Create user object
+            User user = new User();
+            user.setUsername(username.trim());
+            user.setEmail(email.trim());
+            user.setPassword(password);
+            user.setFullName(fullName.trim());
+            user.setAddress(requestData.get("address"));
+            user.setPhoneNumber(requestData.get("phoneNumber"));
+            
+            System.out.println("Creating user: " + user.getUsername());
+            
+            User savedUser = userService.registerUser(user);
+            
+            System.out.println("User created successfully with ID: " + savedUser.getId());
+            
             response.put("message", "User registered successfully");
             response.put("user", Map.of(
                 "id", savedUser.getId(),
@@ -45,6 +119,7 @@ public class UserController {
                 "role", savedUser.getRole()
             ));
             return ResponseEntity.ok(response);
+            
         } catch (RuntimeException e) {
             System.out.println("Registration error: " + e.getMessage());
             e.printStackTrace();
@@ -65,25 +140,44 @@ public class UserController {
         
         Map<String, Object> response = new HashMap<>();
         
-        if (userService.authenticateUser(username, password)) {
-            Optional<User> user = userService.findByUsername(username);
-            if (user.isPresent()) {
+        // Debug logging
+        System.out.println("Login attempt for username: " + username);
+        
+        try {
+            Optional<User> userOpt = userService.findByUsername(username);
+            if (!userOpt.isPresent()) {
+                System.out.println("User not found: " + username);
+                response.put("error", "Invalid username or password");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            User user = userOpt.get();
+            System.out.println("User found: " + user.getUsername() + ", Role: " + user.getRole());
+            
+            if (userService.authenticateUser(username, password)) {
+                System.out.println("Authentication successful for: " + username);
                 response.put("message", "Login successful");
                 response.put("user", Map.of(
-                    "id", user.get().getId(),
-                    "username", user.get().getUsername(),
-                    "email", user.get().getEmail(),
-                    "fullName", user.get().getFullName(),
-                    "address", user.get().getAddress() != null ? user.get().getAddress() : "",
-                    "phoneNumber", user.get().getPhoneNumber() != null ? user.get().getPhoneNumber() : "",
-                    "role", user.get().getRole()
+                    "id", user.getId(),
+                    "username", user.getUsername(),
+                    "email", user.getEmail(),
+                    "fullName", user.getFullName(),
+                    "address", user.getAddress() != null ? user.getAddress() : "",
+                    "phoneNumber", user.getPhoneNumber() != null ? user.getPhoneNumber() : "",
+                    "role", user.getRole()
                 ));
                 return ResponseEntity.ok(response);
+            } else {
+                System.out.println("Authentication failed for: " + username);
+                response.put("error", "Invalid username or password");
+                return ResponseEntity.badRequest().body(response);
             }
+        } catch (Exception e) {
+            System.out.println("Login error: " + e.getMessage());
+            e.printStackTrace();
+            response.put("error", "Login failed: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
-        
-        response.put("error", "Invalid username or password");
-        return ResponseEntity.badRequest().body(response);
     }
     
     @GetMapping("/{id}")

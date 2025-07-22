@@ -6,7 +6,7 @@ let cartItems = [];
 const API_BASE = '/api';
 
 // Initialize the application
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
     setupEventListeners();
 });
@@ -19,7 +19,7 @@ function initializeApp() {
         updateUIForLoggedInUser();
         loadCartItems();
     }
-    
+
     // Load products on initial load
     loadProducts();
 }
@@ -27,18 +27,18 @@ function initializeApp() {
 function setupEventListeners() {
     // Login form
     document.getElementById('login-form').addEventListener('submit', handleLogin);
-    
+
     // Register form
     document.getElementById('register-form').addEventListener('submit', handleRegister);
-    
+
     // Checkout form
     document.getElementById('checkout-form').addEventListener('submit', handleCheckout);
-    
+
     // Add product form (admin)
     document.getElementById('add-product-form').addEventListener('submit', handleAddProduct);
-    
+
     // Search input
-    document.getElementById('search-input').addEventListener('keypress', function(e) {
+    document.getElementById('search-input').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
             searchProducts();
         }
@@ -51,10 +51,10 @@ function showSection(sectionId) {
     document.querySelectorAll('.section').forEach(section => {
         section.classList.remove('active');
     });
-    
+
     // Show selected section
     document.getElementById(sectionId).classList.add('active');
-    
+
     // Load section-specific data
     if (sectionId === 'products') {
         loadProducts();
@@ -73,12 +73,14 @@ function showAdminTab(tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    
+
     // Show selected tab
     document.getElementById(`admin-${tabId}`).classList.add('active');
     event.target.classList.add('active');
-    
-    if (tabId === 'products') {
+
+    if (tabId === 'dashboard') {
+        loadDashboardStats();
+    } else if (tabId === 'products') {
         loadAdminProducts();
     } else if (tabId === 'orders') {
         loadAdminOrders();
@@ -88,10 +90,10 @@ function showAdminTab(tabId) {
 // Authentication functions
 async function handleLogin(e) {
     e.preventDefault();
-    
+
     const username = document.getElementById('login-username').value;
     const password = document.getElementById('login-password').value;
-    
+
     try {
         const response = await fetch(`${API_BASE}/users/login`, {
             method: 'POST',
@@ -100,9 +102,9 @@ async function handleLogin(e) {
             },
             body: JSON.stringify({ username, password })
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
             currentUser = data.user;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -120,7 +122,7 @@ async function handleLogin(e) {
 
 async function handleRegister(e) {
     e.preventDefault();
-    
+
     const userData = {
         username: document.getElementById('register-username').value,
         email: document.getElementById('register-email').value,
@@ -129,7 +131,7 @@ async function handleRegister(e) {
         address: document.getElementById('register-address').value,
         phoneNumber: document.getElementById('register-phone').value
     };
-    
+
     try {
         const response = await fetch(`${API_BASE}/users/register`, {
             method: 'POST',
@@ -138,9 +140,9 @@ async function handleRegister(e) {
             },
             body: JSON.stringify(userData)
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
             showAlert('Registration successful! Please login.', 'success');
             showSection('login');
@@ -166,7 +168,7 @@ function updateUIForLoggedInUser() {
     document.getElementById('login-link').style.display = 'none';
     document.getElementById('register-link').style.display = 'none';
     document.getElementById('logout-link').style.display = 'block';
-    
+
     if (currentUser.role === 'ADMIN') {
         document.getElementById('admin-link').style.display = 'block';
     }
@@ -179,7 +181,7 @@ function updateUIForLoggedOutUser() {
     document.getElementById('admin-link').style.display = 'none';
 }
 
-// Product functions
+// Product functions - FIXED IMAGE DISPLAY
 async function loadProducts() {
     try {
         const response = await fetch(`${API_BASE}/products`);
@@ -196,7 +198,7 @@ async function searchProducts() {
         loadProducts();
         return;
     }
-    
+
     try {
         const response = await fetch(`${API_BASE}/products/search?keyword=${encodeURIComponent(keyword)}`);
         const products = await response.json();
@@ -206,25 +208,40 @@ async function searchProducts() {
     }
 }
 
+// FIXED: Enhanced product display with proper image handling
 function displayProducts(products) {
     const container = document.getElementById('products-container');
-    
+
     if (products.length === 0) {
-        container.innerHTML = '<p>No products found.</p>';
+        container.innerHTML = '<div class="no-products"><p>No products found.</p></div>';
         return;
     }
-    
+
     container.innerHTML = products.map(product => `
         <div class="product-card">
-            <img src="${product.imageUrl || 'https://via.placeholder.com/250x200'}" alt="${product.name}">
-            <h3>${product.name}</h3>
-            <p>${product.description || 'No description available'}</p>
-            <div class="product-price">$${product.price}</div>
-            <div class="product-stock">Stock: ${product.stockQuantity}</div>
-            <button onclick="addToCart(${product.id})" class="btn btn-primary" 
-                    ${product.stockQuantity === 0 ? 'disabled' : ''}>
-                ${product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
-            </button>
+            <div class="product-image">
+                <img src="${product.imageUrl || 'https://via.placeholder.com/300x250/cccccc/666666?text=No+Image'}" 
+                     alt="${product.name}"
+                     onerror="this.src='https://via.placeholder.com/300x250/cccccc/666666?text=Image+Not+Found'">
+                ${product.stockQuantity <= 5 && product.stockQuantity > 0 ? '<div class="low-stock-badge">Low Stock</div>' : ''}
+                ${product.stockQuantity === 0 ? '<div class="out-of-stock-badge">Out of Stock</div>' : ''}
+            </div>
+            <div class="product-info">
+                <h3>${product.name}</h3>
+                <p class="product-description">${product.description || 'No description available'}</p>
+                <div class="product-meta">
+                    <span class="product-category">${product.category || 'Uncategorized'}</span>
+                    ${product.brand ? `<span class="product-brand">${product.brand}</span>` : ''}
+                </div>
+                <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
+                <div class="product-stock">
+                    ${product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
+                </div>
+                <button onclick="addToCart(${product.id})" class="btn btn-primary add-to-cart-btn" 
+                        ${product.stockQuantity === 0 ? 'disabled' : ''}>
+                    ${product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                </button>
+            </div>
         </div>
     `).join('');
 }
@@ -236,7 +253,7 @@ async function addToCart(productId) {
         showSection('login');
         return;
     }
-    
+
     try {
         const response = await fetch(`${API_BASE}/cart/add`, {
             method: 'POST',
@@ -249,9 +266,9 @@ async function addToCart(productId) {
                 quantity: 1
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
             showAlert('Product added to cart!', 'success');
             loadCartItems();
@@ -265,7 +282,7 @@ async function addToCart(productId) {
 
 async function loadCartItems() {
     if (!currentUser) return;
-    
+
     try {
         const response = await fetch(`${API_BASE}/cart/user/${currentUser.id}`);
         cartItems = await response.json();
@@ -277,25 +294,43 @@ async function loadCartItems() {
     }
 }
 
+// FIXED: Enhanced cart display with better formatting and images
 function displayCartItems() {
     const container = document.getElementById('cart-container');
-    
+
     if (cartItems.length === 0) {
-        container.innerHTML = '<p>Your cart is empty.</p>';
+        container.innerHTML = `
+            <div class="empty-cart">
+                <h3>Your cart is empty</h3>
+                <p>Browse our products and add items to your cart!</p>
+                <button onclick="showSection('products')" class="btn btn-primary">Start Shopping</button>
+            </div>
+        `;
         return;
     }
-    
+
     container.innerHTML = cartItems.map(item => `
         <div class="cart-item">
+            <div class="cart-item-image">
+                <img src="${item.product.imageUrl || 'https://via.placeholder.com/80x80/cccccc/666666?text=No+Image'}" 
+                     alt="${item.product.name}"
+                     onerror="this.src='https://via.placeholder.com/80x80/cccccc/666666?text=No+Image'">
+            </div>
             <div class="cart-item-info">
                 <h4>${item.product.name}</h4>
-                <p>Price: $${item.product.price}</p>
+                <p class="item-price">$${parseFloat(item.product.price).toFixed(2)}</p>
+                <p class="item-category">${item.product.category || 'Uncategorized'}</p>
             </div>
             <div class="cart-item-controls">
-                <input type="number" value="${item.quantity}" min="1" 
-                       class="quantity-input" 
-                       onchange="updateCartItemQuantity(${item.id}, this.value)">
-                <button onclick="removeFromCart(${item.id})" class="btn">Remove</button>
+                <div class="quantity-controls">
+                    <button onclick="updateCartItemQuantity(${item.id}, ${item.quantity - 1})" class="qty-btn">-</button>
+                    <input type="number" value="${item.quantity}" min="1" max="${item.product.stockQuantity}"
+                           class="quantity-input" 
+                           onchange="updateCartItemQuantity(${item.id}, this.value)">
+                    <button onclick="updateCartItemQuantity(${item.id}, ${item.quantity + 1})" class="qty-btn">+</button>
+                </div>
+                <div class="item-total">$${(parseFloat(item.product.price) * item.quantity).toFixed(2)}</div>
+                <button onclick="removeFromCart(${item.id})" class="btn btn-remove">Remove</button>
             </div>
         </div>
     `).join('');
@@ -310,7 +345,7 @@ async function updateCartItemQuantity(cartItemId, quantity) {
             },
             body: JSON.stringify({ quantity: parseInt(quantity) })
         });
-        
+
         if (response.ok) {
             loadCartItems();
         }
@@ -324,7 +359,7 @@ async function removeFromCart(cartItemId) {
         const response = await fetch(`${API_BASE}/cart/remove/${cartItemId}`, {
             method: 'DELETE'
         });
-        
+
         if (response.ok) {
             showAlert('Item removed from cart', 'success');
             loadCartItems();
@@ -341,11 +376,11 @@ function updateCartCount() {
 
 async function updateCartTotal() {
     if (!currentUser) return;
-    
+
     try {
         const response = await fetch(`${API_BASE}/cart/total/${currentUser.id}`);
         const data = await response.json();
-        document.getElementById('cart-total').textContent = data.total.toFixed(2);
+        document.getElementById('cart-total').textContent = parseFloat(data.total).toFixed(2);
     } catch (error) {
         console.error('Failed to update cart total:', error);
     }
@@ -357,21 +392,21 @@ function checkout() {
         showSection('login');
         return;
     }
-    
+
     if (cartItems.length === 0) {
         showAlert('Your cart is empty', 'error');
         return;
     }
-    
+
     showSection('checkout');
 }
 
 async function handleCheckout(e) {
     e.preventDefault();
-    
+
     const shippingAddress = document.getElementById('shipping-address').value;
     const paymentMethod = document.getElementById('payment-method').value;
-    
+
     try {
         const response = await fetch(`${API_BASE}/orders/create`, {
             method: 'POST',
@@ -384,9 +419,9 @@ async function handleCheckout(e) {
                 paymentMethod: paymentMethod
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
             showAlert(`Order placed successfully! Order ID: ${data.orderId}`, 'success');
             document.getElementById('checkout-form').reset();
@@ -407,8 +442,67 @@ async function loadAdminData() {
         showSection('home');
         return;
     }
-    
+
+    loadDashboardStats();
     loadAdminProducts();
+}
+
+async function loadDashboardStats() {
+    try {
+        const response = await fetch(`${API_BASE}/dashboard/stats`);
+        const stats = await response.json();
+        displayDashboardStats(stats);
+    } catch (error) {
+        console.error('Failed to load dashboard stats:', error);
+    }
+}
+
+function displayDashboardStats(stats) {
+    const container = document.getElementById('dashboard-stats');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <div class="stat-number">${stats.totalUsers}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Products</h3>
+                <div class="stat-number">${stats.totalProducts}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Orders</h3>
+                <div class="stat-number">${stats.totalOrders}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Revenue</h3>
+                <div class="stat-number">$${parseFloat(stats.totalRevenue).toFixed(2)}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Pending Orders</h3>
+                <div class="stat-number">${stats.pendingOrders}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Low Stock Items</h3>
+                <div class="stat-number">${stats.lowStockProducts}</div>
+            </div>
+        </div>
+        
+        <div class="recent-orders">
+            <h3>Recent Orders</h3>
+            <div class="orders-list">
+                ${stats.recentOrders.map(order => `
+                    <div class="order-item">
+                        <span>Order #${order.id}</span>
+                        <span>${order.customer}</span>
+                        <span>$${parseFloat(order.amount).toFixed(2)}</span>
+                        <span class="status-${order.status.toLowerCase()}">${order.status}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 
 async function loadAdminProducts() {
@@ -421,14 +515,23 @@ async function loadAdminProducts() {
     }
 }
 
+// FIXED: Admin product display with proper image handling
 function displayAdminProducts(products) {
     const container = document.getElementById('admin-products-list');
-    
+
     container.innerHTML = products.map(product => `
         <div class="admin-product-item">
-            <h4>${product.name}</h4>
-            <p>Price: $${product.price} | Stock: ${product.stockQuantity}</p>
-            <p>Category: ${product.category || 'N/A'} | Brand: ${product.brand || 'N/A'}</p>
+            <div class="admin-product-image">
+                <img src="${product.imageUrl || 'https://via.placeholder.com/60x60/cccccc/666666?text=No+Image'}" 
+                     alt="${product.name}"
+                     onerror="this.src='https://via.placeholder.com/60x60/cccccc/666666?text=No+Image'"
+                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;">
+            </div>
+            <div class="admin-product-info">
+                <h4>${product.name}</h4>
+                <p>Price: $${parseFloat(product.price).toFixed(2)} | Stock: ${product.stockQuantity}</p>
+                <p>Category: ${product.category || 'N/A'} | Brand: ${product.brand || 'N/A'}</p>
+            </div>
             <div class="admin-product-actions">
                 <button onclick="editProduct(${product.id})" class="btn">Edit</button>
                 <button onclick="deleteProduct(${product.id})" class="btn" style="background: #e74c3c;">Delete</button>
@@ -439,7 +542,7 @@ function displayAdminProducts(products) {
 
 async function handleAddProduct(e) {
     e.preventDefault();
-    
+
     const productData = {
         name: document.getElementById('product-name').value,
         description: document.getElementById('product-description').value,
@@ -449,7 +552,7 @@ async function handleAddProduct(e) {
         brand: document.getElementById('product-brand').value,
         imageUrl: document.getElementById('product-image').value
     };
-    
+
     try {
         const response = await fetch(`${API_BASE}/products`, {
             method: 'POST',
@@ -458,11 +561,12 @@ async function handleAddProduct(e) {
             },
             body: JSON.stringify(productData)
         });
-        
+
         if (response.ok) {
             showAlert('Product added successfully!', 'success');
             document.getElementById('add-product-form').reset();
             loadAdminProducts();
+            loadProducts(); // Refresh main products view
         } else {
             showAlert('Failed to add product', 'error');
         }
@@ -475,12 +579,12 @@ async function deleteProduct(productId) {
     if (!confirm('Are you sure you want to delete this product?')) {
         return;
     }
-    
+
     try {
         const response = await fetch(`${API_BASE}/products/${productId}`, {
             method: 'DELETE'
         });
-        
+
         if (response.ok) {
             showAlert('Product deleted successfully!', 'success');
             loadAdminProducts();
@@ -505,19 +609,19 @@ async function loadAdminOrders() {
 
 function displayAdminOrders(orders) {
     const container = document.getElementById('admin-orders-list');
-    
+
     if (orders.length === 0) {
         container.innerHTML = '<p>No orders found.</p>';
         return;
     }
-    
+
     container.innerHTML = orders.map(order => `
         <div class="admin-order-item">
             <h4>Order #${order.id}</h4>
             <p>Customer: ${order.user.fullName} (${order.user.email})</p>
             <p>Date: ${new Date(order.orderDate).toLocaleDateString()}</p>
             <p>Status: ${order.status}</p>
-            <p>Total: $${order.totalAmount}</p>
+            <p>Total: $${parseFloat(order.totalAmount).toFixed(2)}</p>
             <p>Shipping: ${order.shippingAddress}</p>
             <div class="admin-order-actions">
                 <select onchange="updateOrderStatus(${order.id}, this.value)">
@@ -535,7 +639,7 @@ function displayAdminOrders(orders) {
 
 async function updateOrderStatus(orderId, status) {
     if (!status) return;
-    
+
     try {
         const response = await fetch(`${API_BASE}/orders/admin/status/${orderId}`, {
             method: 'PUT',
@@ -544,7 +648,7 @@ async function updateOrderStatus(orderId, status) {
             },
             body: JSON.stringify({ status: status })
         });
-        
+
         if (response.ok) {
             showAlert('Order status updated successfully!', 'success');
             loadAdminOrders();
@@ -556,6 +660,10 @@ async function updateOrderStatus(orderId, status) {
     }
 }
 
+function editProduct(productId) {
+    showAlert('Edit functionality coming soon!', 'info');
+}
+
 // Utility functions
 function showAlert(message, type) {
     // Remove existing alerts
@@ -563,16 +671,16 @@ function showAlert(message, type) {
     if (existingAlert) {
         existingAlert.remove();
     }
-    
+
     // Create new alert
     const alert = document.createElement('div');
     alert.className = `alert alert-${type}`;
     alert.textContent = message;
-    
+
     // Insert at the top of main content
     const main = document.querySelector('main');
     main.insertBefore(alert, main.firstChild);
-    
+
     // Auto remove after 5 seconds
     setTimeout(() => {
         if (alert.parentNode) {
