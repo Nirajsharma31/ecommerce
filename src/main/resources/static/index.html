@@ -13,7 +13,6 @@
                 <h1 class="nav-logo">EcommerceAI</h1>
                 <ul class="nav-menu">
                     <li><a href="#home" onclick="showSection('home')">Home</a></li>
-                    <li><a href="#products" onclick="showSection('products')">Products</a></li>
                     <li><a href="#cart" onclick="showSection('cart')">Cart (<span id="cart-count">0</span>)</a></li>
                     <li><a href="#login" id="login-link" onclick="showSection('login')">Login</a></li>
                     <li><a href="#register" id="register-link" onclick="showSection('register')">Register</a></li>
@@ -27,25 +26,102 @@
     <main>
         <!-- Home Section -->
         <section id="home" class="section active">
-            <div class="hero">
-                <h2>Welcome to EcommerceAI</h2>
-                <p>Your one-stop shop for all your needs</p>
-                <button onclick="showSection('products')" class="btn btn-primary">Shop Now</button>
+            <!-- Hero Banner -->
+            <div class="hero-banner">
+                <div class="hero-content">
+                    <h1>Welcome to EcommerceAI</h1>
+                    <p>Discover amazing products at unbeatable prices</p>
+                    <div class="hero-search">
+                        <input type="text" id="hero-search-input" placeholder="Search for products...">
+                        <button onclick="searchProductsFromHero()" class="btn btn-primary">Search</button>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="https://via.placeholder.com/600x400/667eea/ffffff?text=Featured+Product" alt="Featured Product">
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="features-section">
+                <div class="feature-item">
+                    <div class="feature-icon">🚚</div>
+                    <h3>Free Online Delivery</h3>
+                    <p>Looking Over $200</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">💰</div>
+                    <h3>Cashback Warranty</h3>
+                    <p>With in 30 Days</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎧</div>
+                    <h3>Perfect Online Services</h3>
+                    <p>TIME 9AM-5PM</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Exchange & Return</h3>
+                    <p>Our Policy</p>
+                </div>
+            </div>
+
+            <!-- Category Cards -->
+            <div class="category-cards">
+                <div class="category-card electronics">
+                    <div class="category-content">
+                        <h3>Latest Mobile</h3>
+                        <p>Offer up 25% Off</p>
+                        <button class="btn btn-warning" onclick="filterByCategory('Electronics')">BUY NOW</button>
+                    </div>
+                </div>
+                <div class="category-card audio">
+                    <div class="category-content">
+                        <h3>New Speaker</h3>
+                        <p>Offer up 20% OFF</p>
+                        <button class="btn btn-warning" onclick="filterByCategory('Electronics')">BUY NOW</button>
+                    </div>
+                </div>
+                <div class="category-card shoes">
+                    <div class="category-content">
+                        <h3>Popular Shoes</h3>
+                        <p>Offer up 50% OFF</p>
+                        <button class="btn btn-warning" onclick="filterByCategory('Clothing')">BUY NOW</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Section on Home -->
+            <div class="home-products-section">
+                <div class="section-header">
+                    <h2>New Products</h2>
+                    <div class="navigation-arrows">
+                        <button class="nav-arrow prev" onclick="scrollProducts('left')">❮</button>
+                        <button class="nav-arrow next" onclick="scrollProducts('right')">❯</button>
+                    </div>
+                </div>
+                <div id="home-products-container" class="home-products-grid">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
+
+            <!-- All Products Section -->
+            <div class="all-products-section">
+                <h2>All Products</h2>
+                <div class="product-filters">
+                    <button class="filter-btn active" onclick="filterProducts('all')">All</button>
+                    <button class="filter-btn" onclick="filterProducts('Electronics')">Electronics</button>
+                    <button class="filter-btn" onclick="filterProducts('Clothing')">Clothing</button>
+                    <button class="filter-btn" onclick="filterProducts('Home & Garden')">Home & Garden</button>
+                    <button class="filter-btn" onclick="filterProducts('Books')">Books</button>
+                    <button class="filter-btn" onclick="filterProducts('Sports')">Sports</button>
+                </div>
+                <div id="all-products-container" class="products-grid">
+                    <!-- All products will be loaded here -->
+                </div>
             </div>
         </section>
 
-        <!-- Products Section -->
-        <section id="products" class="section">
-            <h2>Our Products</h2>
-            <div class="search-container">
-                <input type="text" id="search-input" placeholder="Search products...">
-                <button onclick="searchProducts()" class="btn">Search</button>
-                <button onclick="loadProducts()" class="btn">Show All</button>
-            </div>
-            <div id="products-container" class="products-grid">
-                <!-- Products will be loaded here -->
-            </div>
-        </section>
+
 
         <!-- Cart Section -->
         <section id="cart" class="section">
@@ -187,6 +263,6 @@
         </section>
     </main>
 
-    <script src="js/app.js"></script>
+    <script src="js/app-fixed.js"></script>
 </body>
 </html>

@@ -54,10 +54,10 @@ function setupEventListeners() {
     // Add product form (admin)
     document.getElementById('add-product-form').addEventListener('submit', handleAddProduct);
 
-    // Search input
-    document.getElementById('search-input').addEventListener('keypress', function (e) {
+    // Hero search input
+    document.getElementById('hero-search-input').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
-            searchProducts();
+            searchProductsFromHero();
         }
     });
 }
@@ -198,16 +198,16 @@ function updateUIForLoggedOutUser() {
     document.getElementById('admin-link').style.display = 'none';
 }
 
-// Product functions - HOMEPAGE PRODUCTS
+// Product functions - FIXED IMAGE DISPLAY
 async function loadHomeProducts() {
     try {
         const response = await fetch(`${API_BASE}/products`);
         const products = await response.json();
-        
+
         // Display featured products (first 4)
         const featuredProducts = products.slice(0, 4);
         displayHomeProducts(featuredProducts);
-        
+
         // Display all products
         displayAllProducts(products);
     } catch (error) {
@@ -218,13 +218,13 @@ async function loadHomeProducts() {
 function displayHomeProducts(products) {
     const container = document.getElementById('home-products-container');
     if (!container) return;
-    
+
     container.innerHTML = products.map(product => `
         <div class="product-card">
             <div class="product-image">
-                <img src="${product.imageUrl || 'https://via.placeholder.com/300x250/cccccc/666666?text=No+Image'}" 
+                <img src="${product.imageUrl || PLACEHOLDER_IMAGE}" 
                      alt="${product.name}"
-                     onerror="this.src='https://via.placeholder.com/300x250/cccccc/666666?text=Image+Not+Found'">
+                     onerror="handleImageError(this)">
                 ${product.stockQuantity <= 5 && product.stockQuantity > 0 ? '<div class="low-stock-badge">Low Stock</div>' : ''}
                 ${product.stockQuantity === 0 ? '<div class="out-of-stock-badge">Out of Stock</div>' : ''}
             </div>
@@ -251,13 +251,13 @@ function displayHomeProducts(products) {
 function displayAllProducts(products) {
     const container = document.getElementById('all-products-container');
     if (!container) return;
-    
+
     container.innerHTML = products.map(product => `
         <div class="product-card" data-category="${product.category}">
             <div class="product-image">
-                <img src="${product.imageUrl || 'https://via.placeholder.com/300x250/cccccc/666666?text=No+Image'}" 
+                <img src="${product.imageUrl || PLACEHOLDER_IMAGE}" 
                      alt="${product.name}"
-                     onerror="this.src='https://via.placeholder.com/300x250/cccccc/666666?text=Image+Not+Found'">
+                     onerror="handleImageError(this)">
                 ${product.stockQuantity <= 5 && product.stockQuantity > 0 ? '<div class="low-stock-badge">Low Stock</div>' : ''}
                 ${product.stockQuantity === 0 ? '<div class="out-of-stock-badge">Out of Stock</div>' : ''}
             </div>
@@ -288,12 +288,12 @@ async function searchProductsFromHero() {
         loadHomeProducts();
         return;
     }
-    
+
     try {
         const response = await fetch(`${API_BASE}/products/search?keyword=${encodeURIComponent(keyword)}`);
         const products = await response.json();
         displayAllProducts(products);
-        
+
         // Scroll to products section
         document.getElementById('all-products-container').scrollIntoView({ behavior: 'smooth' });
     } catch (error) {
@@ -310,11 +310,11 @@ function filterByCategory(category) {
 function filterProducts(category) {
     const allCards = document.querySelectorAll('#all-products-container .product-card');
     const filterBtns = document.querySelectorAll('.filter-btn');
-    
+
     // Update active filter button
     filterBtns.forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-    
+
     // Show/hide products based on category
     allCards.forEach(card => {
         if (category === 'all' || card.dataset.category === category) {
@@ -328,71 +328,12 @@ function filterProducts(category) {
 function scrollProducts(direction) {
     const container = document.getElementById('home-products-container');
     const scrollAmount = 300;
-    
+
     if (direction === 'left') {
         container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
     } else {
         container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
-}
-
-// Keep original loadProducts for backward compatibility
-async function loadProducts() {
-    loadHomeProducts();
-}
-
-async function searchProducts() {
-    const keyword = document.getElementById('search-input').value.trim();
-    if (!keyword) {
-        loadProducts();
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/products/search?keyword=${encodeURIComponent(keyword)}`);
-        const products = await response.json();
-        displayProducts(products);
-    } catch (error) {
-        showAlert('Search failed', 'error');
-    }
-}
-
-// FIXED: Enhanced product display with proper image handling
-function displayProducts(products) {
-    const container = document.getElementById('products-container');
-
-    if (products.length === 0) {
-        container.innerHTML = '<div class="no-products"><p>No products found.</p></div>';
-        return;
-    }
-
-    container.innerHTML = products.map(product => `
-        <div class="product-card">
-            <div class="product-image">
-                <img src="${product.imageUrl || 'https://via.placeholder.com/300x250/cccccc/666666?text=No+Image'}" 
-                     alt="${product.name}"
-                     onerror="this.src='https://via.placeholder.com/300x250/cccccc/666666?text=Image+Not+Found'">
-                ${product.stockQuantity <= 5 && product.stockQuantity > 0 ? '<div class="low-stock-badge">Low Stock</div>' : ''}
-                ${product.stockQuantity === 0 ? '<div class="out-of-stock-badge">Out of Stock</div>' : ''}
-            </div>
-            <div class="product-info">
-                <h3>${product.name}</h3>
-                <p class="product-description">${product.description || 'No description available'}</p>
-                <div class="product-meta">
-                    <span class="product-category">${product.category || 'Uncategorized'}</span>
-                    ${product.brand ? `<span class="product-brand">${product.brand}</span>` : ''}
-                </div>
-                <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
-                <div class="product-stock">
-                    ${product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
-                </div>
-                <button onclick="addToCart(${product.id})" class="btn btn-primary add-to-cart-btn" 
-                        ${product.stockQuantity === 0 ? 'disabled' : ''}>
-                    ${product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
-                </button>
-            </div>
-        </div>
-    `).join('');
 }
 
 // Cart functions
@@ -443,7 +384,6 @@ async function loadCartItems() {
     }
 }
 
-// FIXED: Enhanced cart display with better formatting and images
 function displayCartItems() {
     const container = document.getElementById('cart-container');
 
@@ -452,7 +392,7 @@ function displayCartItems() {
             <div class="empty-cart">
                 <h3>Your cart is empty</h3>
                 <p>Browse our products and add items to your cart!</p>
-                <button onclick="showSection('products')" class="btn btn-primary">Start Shopping</button>
+                <button onclick="showSection('home')" class="btn btn-primary">Start Shopping</button>
             </div>
         `;
         return;
@@ -461,9 +401,9 @@ function displayCartItems() {
     container.innerHTML = cartItems.map(item => `
         <div class="cart-item">
             <div class="cart-item-image">
-                <img src="${item.product.imageUrl || 'https://via.placeholder.com/80x80/cccccc/666666?text=No+Image'}" 
+                <img src="${item.product.imageUrl || PLACEHOLDER_IMAGE}" 
                      alt="${item.product.name}"
-                     onerror="this.src='https://via.placeholder.com/80x80/cccccc/666666?text=No+Image'">
+                     onerror="handleImageError(this)">
             </div>
             <div class="cart-item-info">
                 <h4>${item.product.name}</h4>
@@ -574,7 +514,7 @@ async function handleCheckout(e) {
         if (response.ok) {
             showAlert(`Order placed successfully! Order ID: ${data.orderId}`, 'success');
             document.getElementById('checkout-form').reset();
-            loadCartItems(); // Refresh cart (should be empty now)
+            loadCartItems();
             showSection('home');
         } else {
             showAlert(data.error || 'Failed to place order', 'error');
@@ -637,20 +577,6 @@ function displayDashboardStats(stats) {
                 <div class="stat-number">${stats.lowStockProducts}</div>
             </div>
         </div>
-        
-        <div class="recent-orders">
-            <h3>Recent Orders</h3>
-            <div class="orders-list">
-                ${stats.recentOrders.map(order => `
-                    <div class="order-item">
-                        <span>Order #${order.id}</span>
-                        <span>${order.customer}</span>
-                        <span>$${parseFloat(order.amount).toFixed(2)}</span>
-                        <span class="status-${order.status.toLowerCase()}">${order.status}</span>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
     `;
 }
 
@@ -664,16 +590,15 @@ async function loadAdminProducts() {
     }
 }
 
-// FIXED: Admin product display with proper image handling
 function displayAdminProducts(products) {
     const container = document.getElementById('admin-products-list');
 
     container.innerHTML = products.map(product => `
         <div class="admin-product-item">
             <div class="admin-product-image">
-                <img src="${product.imageUrl || 'https://via.placeholder.com/60x60/cccccc/666666?text=No+Image'}" 
+                <img src="${product.imageUrl || PLACEHOLDER_IMAGE}" 
                      alt="${product.name}"
-                     onerror="this.src='https://via.placeholder.com/60x60/cccccc/666666?text=No+Image'"
+                     onerror="handleImageError(this)"
                      style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;">
             </div>
             <div class="admin-product-info">
@@ -715,7 +640,7 @@ async function handleAddProduct(e) {
             showAlert('Product added successfully!', 'success');
             document.getElementById('add-product-form').reset();
             loadAdminProducts();
-            loadProducts(); // Refresh main products view
+            loadHomeProducts();
         } else {
             showAlert('Failed to add product', 'error');
         }
@@ -737,7 +662,7 @@ async function deleteProduct(productId) {
         if (response.ok) {
             showAlert('Product deleted successfully!', 'success');
             loadAdminProducts();
-            loadProducts(); // Refresh main products view
+            loadHomeProducts();
         } else {
             showAlert('Failed to delete product', 'error');
         }
@@ -836,4 +761,9 @@ function showAlert(message, type) {
             alert.remove();
         }
     }, 5000);
+}
+
+// Keep original loadProducts for backward compatibility
+async function loadProducts() {
+    loadHomeProducts();
 }

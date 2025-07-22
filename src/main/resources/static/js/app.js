@@ -5,6 +5,23 @@ let cartItems = [];
 // API Base URL
 const API_BASE = '/api';
 
+// Safe placeholder image (base64 encoded SVG)
+const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+
+// Helper function to handle image errors safely
+function handleImageError(img) {
+    if (img.src !== PLACEHOLDER_IMAGE) {
+        img.src = PLACEHOLDER_IMAGE;
+    } else {
+        img.style.display = 'none';
+        const placeholder = document.createElement('div');
+        placeholder.className = 'image-placeholder';
+        placeholder.style.cssText = 'width: 100%; height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999; font-size: 14px; border-radius: 5px;';
+        placeholder.textContent = 'No Image Available';
+        img.parentElement.appendChild(placeholder);
+    }
+}
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
@@ -20,8 +37,8 @@ function initializeApp() {
         loadCartItems();
     }
 
-    // Load products on initial load
-    loadProducts();
+    // Load products on home page
+    loadHomeProducts();
 }
 
 function setupEventListeners() {
@@ -56,8 +73,8 @@ function showSection(sectionId) {
     document.getElementById(sectionId).classList.add('active');
 
     // Load section-specific data
-    if (sectionId === 'products') {
-        loadProducts();
+    if (sectionId === 'home') {
+        loadHomeProducts();
     } else if (sectionId === 'cart') {
         loadCartItems();
     } else if (sectionId === 'admin') {
@@ -181,15 +198,147 @@ function updateUIForLoggedOutUser() {
     document.getElementById('admin-link').style.display = 'none';
 }
 
-// Product functions - FIXED IMAGE DISPLAY
-async function loadProducts() {
+// Product functions - HOMEPAGE PRODUCTS
+async function loadHomeProducts() {
     try {
         const response = await fetch(`${API_BASE}/products`);
         const products = await response.json();
-        displayProducts(products);
+        
+        // Display featured products (first 4)
+        const featuredProducts = products.slice(0, 4);
+        displayHomeProducts(featuredProducts);
+        
+        // Display all products
+        displayAllProducts(products);
     } catch (error) {
         showAlert('Failed to load products', 'error');
     }
+}
+
+function displayHomeProducts(products) {
+    const container = document.getElementById('home-products-container');
+    if (!container) return;
+    
+    container.innerHTML = products.map(product => `
+        <div class="product-card">
+            <div class="product-image">
+                <img src="${product.imageUrl || 'https://via.placeholder.com/300x250/cccccc/666666?text=No+Image'}" 
+                     alt="${product.name}"
+                     onerror="this.src='https://via.placeholder.com/300x250/cccccc/666666?text=Image+Not+Found'">
+                ${product.stockQuantity <= 5 && product.stockQuantity > 0 ? '<div class="low-stock-badge">Low Stock</div>' : ''}
+                ${product.stockQuantity === 0 ? '<div class="out-of-stock-badge">Out of Stock</div>' : ''}
+            </div>
+            <div class="product-info">
+                <h3>${product.name}</h3>
+                <p class="product-description">${product.description || 'No description available'}</p>
+                <div class="product-meta">
+                    <span class="product-category">${product.category || 'Uncategorized'}</span>
+                    ${product.brand ? `<span class="product-brand">${product.brand}</span>` : ''}
+                </div>
+                <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
+                <div class="product-stock">
+                    ${product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
+                </div>
+                <button onclick="addToCart(${product.id})" class="btn btn-primary add-to-cart-btn" 
+                        ${product.stockQuantity === 0 ? 'disabled' : ''}>
+                    ${product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function displayAllProducts(products) {
+    const container = document.getElementById('all-products-container');
+    if (!container) return;
+    
+    container.innerHTML = products.map(product => `
+        <div class="product-card" data-category="${product.category}">
+            <div class="product-image">
+                <img src="${product.imageUrl || 'https://via.placeholder.com/300x250/cccccc/666666?text=No+Image'}" 
+                     alt="${product.name}"
+                     onerror="this.src='https://via.placeholder.com/300x250/cccccc/666666?text=Image+Not+Found'">
+                ${product.stockQuantity <= 5 && product.stockQuantity > 0 ? '<div class="low-stock-badge">Low Stock</div>' : ''}
+                ${product.stockQuantity === 0 ? '<div class="out-of-stock-badge">Out of Stock</div>' : ''}
+            </div>
+            <div class="product-info">
+                <h3>${product.name}</h3>
+                <p class="product-description">${product.description || 'No description available'}</p>
+                <div class="product-meta">
+                    <span class="product-category">${product.category || 'Uncategorized'}</span>
+                    ${product.brand ? `<span class="product-brand">${product.brand}</span>` : ''}
+                </div>
+                <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
+                <div class="product-stock">
+                    ${product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
+                </div>
+                <button onclick="addToCart(${product.id})" class="btn btn-primary add-to-cart-btn" 
+                        ${product.stockQuantity === 0 ? 'disabled' : ''}>
+                    ${product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Homepage specific functions
+async function searchProductsFromHero() {
+    const keyword = document.getElementById('hero-search-input').value.trim();
+    if (!keyword) {
+        loadHomeProducts();
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/products/search?keyword=${encodeURIComponent(keyword)}`);
+        const products = await response.json();
+        displayAllProducts(products);
+        
+        // Scroll to products section
+        document.getElementById('all-products-container').scrollIntoView({ behavior: 'smooth' });
+    } catch (error) {
+        showAlert('Search failed', 'error');
+    }
+}
+
+function filterByCategory(category) {
+    filterProducts(category);
+    // Scroll to products section
+    document.getElementById('all-products-container').scrollIntoView({ behavior: 'smooth' });
+}
+
+function filterProducts(category) {
+    const allCards = document.querySelectorAll('#all-products-container .product-card');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    
+    // Update active filter button
+    filterBtns.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Show/hide products based on category
+    allCards.forEach(card => {
+        if (category === 'all' || card.dataset.category === category) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function scrollProducts(direction) {
+    const container = document.getElementById('home-products-container');
+    const scrollAmount = 300;
+    
+    if (direction === 'left') {
+        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    } else {
+        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+}
+
+// Keep original loadProducts for backward compatibility
+async function loadProducts() {
+    loadHomeProducts();
 }
 
 async function searchProducts() {
