@@ -31,8 +31,18 @@ public class Product {
     private Integer stockQuantity;
     
     private String category;
-    private String imageUrl;
+    private String imageUrl; // Keep for backward compatibility
     private String brand;
+    
+    @Lob
+    @Column(name = "image_data", columnDefinition = "LONGBLOB")
+    private byte[] imageData;
+    
+    @Column(name = "image_name")
+    private String imageName;
+    
+    @Column(name = "image_type")
+    private String imageType;
     
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -95,6 +105,15 @@ public class Product {
     
     public List<OrderItem> getOrderItems() { return orderItems; }
     public void setOrderItems(List<OrderItem> orderItems) { this.orderItems = orderItems; }
+    
+    public byte[] getImageData() { return imageData; }
+    public void setImageData(byte[] imageData) { this.imageData = imageData; }
+    
+    public String getImageName() { return imageName; }
+    public void setImageName(String imageName) { this.imageName = imageName; }
+    
+    public String getImageType() { return imageType; }
+    public void setImageType(String imageType) { this.imageType = imageType; }
     
     @PreUpdate
     public void preUpdate() {

@@ -62,6 +62,12 @@ function setupEventListeners() {
             searchProductsFromHero();
         }
     });
+
+    // Image upload preview
+    document.getElementById('product-image').addEventListener('change', handleImagePreview);
+    
+    // Remove image button
+    document.getElementById('remove-image').addEventListener('click', removeImagePreview);
 }
 
 // Navigation functions
@@ -224,7 +230,7 @@ function displayHomeProducts(products) {
     container.innerHTML = products.map(product => `
         <div class="product-card">
             <div class="product-image">
-                <img src="${product.imageUrl || PLACEHOLDER_IMAGE}" 
+                <img src="${getProductImageUrl(product)}" 
                      alt="${product.name}"
                      onerror="handleImageError(this)">
                 ${product.stockQuantity <= 5 && product.stockQuantity > 0 ? '<div class="low-stock-badge">Low Stock</div>' : ''}
@@ -257,7 +263,7 @@ function displayAllProducts(products) {
     container.innerHTML = products.map(product => `
         <div class="product-card" data-category="${product.category}">
             <div class="product-image">
-                <img src="${product.imageUrl || PLACEHOLDER_IMAGE}" 
+                <img src="${getProductImageUrl(product)}" 
                      alt="${product.name}"
                      onerror="handleImageError(this)">
                 ${product.stockQuantity <= 5 && product.stockQuantity > 0 ? '<div class="low-stock-badge">Low Stock</div>' : ''}
@@ -619,32 +625,35 @@ function displayAdminProducts(products) {
 async function handleAddProduct(e) {
     e.preventDefault();
 
-    const productData = {
-        name: document.getElementById('product-name').value,
-        description: document.getElementById('product-description').value,
-        price: parseFloat(document.getElementById('product-price').value),
-        stockQuantity: parseInt(document.getElementById('product-stock').value),
-        category: document.getElementById('product-category').value,
-        brand: document.getElementById('product-brand').value,
-        imageUrl: document.getElementById('product-image').value
-    };
+    const formData = new FormData();
+    formData.append('name', document.getElementById('product-name').value);
+    formData.append('description', document.getElementById('product-description').value);
+    formData.append('price', document.getElementById('product-price').value);
+    formData.append('stockQuantity', document.getElementById('product-stock').value);
+    formData.append('category', document.getElementById('product-category').value);
+    formData.append('brand', document.getElementById('product-brand').value);
+    
+    const imageFile = document.getElementById('product-image').files[0];
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
 
     try {
-        const response = await fetch(`${API_BASE}/products`, {
+        const response = await fetch(`${API_BASE}/products/with-image`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(productData)
+            body: formData
         });
+
+        const data = await response.json();
 
         if (response.ok) {
             showAlert('Product added successfully!', 'success');
             document.getElementById('add-product-form').reset();
+            removeImagePreview();
             loadAdminProducts();
             loadHomeProducts();
         } else {
-            showAlert('Failed to add product', 'error');
+            showAlert(data.error || 'Failed to add product', 'error');
         }
     } catch (error) {
         showAlert('Network error. Please try again.', 'error');
@@ -763,6 +772,51 @@ function showAlert(message, type) {
             alert.remove();
         }
     }, 5000);
+}
+
+// Image handling functions
+function handleImagePreview(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    
+    if (file) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            showAlert('Please select an image file', 'error');
+            event.target.value = '';
+            return;
+        }
+        
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showAlert('Image size must be less than 5MB', 'error');
+            event.target.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+function removeImagePreview() {
+    document.getElementById('product-image').value = '';
+    document.getElementById('image-preview').style.display = 'none';
+}
+
+// Function to get image URL for products (from database or fallback)
+function getProductImageUrl(product) {
+    if (product.imageData) {
+        return `${API_BASE}/images/product/${product.id}`;
+    }
+    return product.imageUrl || PLACEHOLDER_IMAGE;
 }
 
 // Keep original loadProducts for backward compatibility
