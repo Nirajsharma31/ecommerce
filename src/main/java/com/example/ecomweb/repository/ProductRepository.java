@@ -21,4 +21,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     
     @Query("SELECT DISTINCT p.category FROM Product p WHERE p.category IS NOT NULL")
     List<String> findAllCategories();
+    
+    long countByStockQuantityLessThanEqual(Integer stockQuantity);
 }

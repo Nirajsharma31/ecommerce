@@ -95,4 +95,12 @@ public class OrderService {
     public long getPendingOrdersCount() {
         return orderRepository.countPendingOrders();
     }
+    
+    public long getTotalOrdersCount() {
+        return orderRepository.count();
+    }
+    
+    public BigDecimal getTotalRevenue() {
+        return orderRepository.calculateTotalRevenue();
+    }
 }

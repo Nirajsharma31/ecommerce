@@ -71,4 +71,12 @@ public class ProductService {
             productRepository.save(product);
         }
     }
+    
+    public long getTotalProductsCount() {
+        return productRepository.count();
+    }
+    
+    public long getLowStockProductsCount() {
+        return productRepository.countByStockQuantityLessThanEqual(5);
+    }
 }

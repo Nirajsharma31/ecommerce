@@ -75,4 +75,8 @@ public class UserService {
         Optional<User> user = findById(userId);
         return user.isPresent() && user.get().getRole() == User.Role.ADMIN;
     }
+    
+    public long getTotalUsersCount() {
+        return userRepository.count();
+    }
 }
