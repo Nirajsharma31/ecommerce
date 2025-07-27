@@ -233,8 +233,12 @@ function displayHomeProducts(products) {
                 <img src="${getProductImageUrl(product)}" 
                      alt="${product.name}"
                      onerror="handleImageError(this)">
-                ${product.stockQuantity <= 5 && product.stockQuantity > 0 ? '<div class="low-stock-badge">Low Stock</div>' : ''}
-                ${product.stockQuantity === 0 ? '<div class="out-of-stock-badge">Out of Stock</div>' : ''}
+                ${product.stockQuantity <= 5 && product.stockQuantity > 0 
+                    ? '<div class="low-stock-badge">Low Stock</div>' 
+                    : ''}
+                ${product.stockQuantity === 0 
+                    ? '<div class="out-of-stock-badge">Out of Stock</div>' 
+                    : ''}
             </div>
             <div class="product-info">
                 <h3>${product.name}</h3>
@@ -243,11 +247,18 @@ function displayHomeProducts(products) {
                     <span class="product-category">${product.category || 'Uncategorized'}</span>
                     ${product.brand ? `<span class="product-brand">${product.brand}</span>` : ''}
                 </div>
-                <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
+                
+                <!-- CHANGE CURRENCY SYMBOL HERE -->
+                <!-- Replaced $ with ₹ -->
+                <div class="product-price">₹${parseFloat(product.price).toFixed(2)}</div>
+                
                 <div class="product-stock">
-                    ${product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
+                    ${product.stockQuantity > 0 
+                        ? `${product.stockQuantity} in stock` 
+                        : 'Out of stock'}
                 </div>
-                <button onclick="addToCart(${product.id})" class="btn btn-primary add-to-cart-btn" 
+                <button onclick="addToCart(${product.id})" 
+                        class="btn btn-primary add-to-cart-btn" 
                         ${product.stockQuantity === 0 ? 'disabled' : ''}>
                     ${product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
                 </button>
@@ -255,6 +266,7 @@ function displayHomeProducts(products) {
         </div>
     `).join('');
 }
+
 
 function displayAllProducts(products) {
     const container = document.getElementById('all-products-container');
@@ -266,8 +278,12 @@ function displayAllProducts(products) {
                 <img src="${getProductImageUrl(product)}" 
                      alt="${product.name}"
                      onerror="handleImageError(this)">
-                ${product.stockQuantity <= 5 && product.stockQuantity > 0 ? '<div class="low-stock-badge">Low Stock</div>' : ''}
-                ${product.stockQuantity === 0 ? '<div class="out-of-stock-badge">Out of Stock</div>' : ''}
+                ${product.stockQuantity <= 5 && product.stockQuantity > 0 
+                    ? '<div class="low-stock-badge">Low Stock</div>' 
+                    : ''}
+                ${product.stockQuantity === 0 
+                    ? '<div class="out-of-stock-badge">Out of Stock</div>' 
+                    : ''}
             </div>
             <div class="product-info">
                 <h3>${product.name}</h3>
@@ -276,11 +292,18 @@ function displayAllProducts(products) {
                     <span class="product-category">${product.category || 'Uncategorized'}</span>
                     ${product.brand ? `<span class="product-brand">${product.brand}</span>` : ''}
                 </div>
-                <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
+                
+                <!-- CHANGE CURRENCY SYMBOL HERE -->
+                <!-- Replace $ with ₹ -->
+                <div class="product-price">₹${parseFloat(product.price).toFixed(2)}</div>
+                
                 <div class="product-stock">
-                    ${product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
+                    ${product.stockQuantity > 0 
+                        ? `${product.stockQuantity} in stock` 
+                        : 'Out of stock'}
                 </div>
-                <button onclick="addToCart(${product.id})" class="btn btn-primary add-to-cart-btn" 
+                <button onclick="addToCart(${product.id})" 
+                        class="btn btn-primary add-to-cart-btn" 
                         ${product.stockQuantity === 0 ? 'disabled' : ''}>
                     ${product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
                 </button>
@@ -288,6 +311,7 @@ function displayAllProducts(products) {
         </div>
     `).join('');
 }
+
 
 // Homepage specific functions
 async function searchProductsFromHero() {
@@ -409,13 +433,14 @@ function displayCartItems() {
     container.innerHTML = cartItems.map(item => `
         <div class="cart-item">
             <div class="cart-item-image">
-                <img src="${item.product.imageUrl || PLACEHOLDER_IMAGE}" 
+                <img src="${getProductImageUrl(item.product)}" 
                      alt="${item.product.name}"
                      onerror="handleImageError(this)">
             </div>
             <div class="cart-item-info">
                 <h4>${item.product.name}</h4>
-                <p class="item-price">$${parseFloat(item.product.price).toFixed(2)}</p>
+                <!-- Price updated to INR -->
+                <p class="item-price">₹${parseFloat(item.product.price).toFixed(2)}</p>
                 <p class="item-category">${item.product.category || 'Uncategorized'}</p>
             </div>
             <div class="cart-item-controls">
@@ -426,7 +451,8 @@ function displayCartItems() {
                            onchange="updateCartItemQuantity(${item.id}, this.value)">
                     <button onclick="updateCartItemQuantity(${item.id}, ${item.quantity + 1})" class="qty-btn">+</button>
                 </div>
-                <div class="item-total">$${(parseFloat(item.product.price) * item.quantity).toFixed(2)}</div>
+                <!-- Total price per item updated to INR -->
+                <div class="item-total">₹${(parseFloat(item.product.price) * item.quantity).toFixed(2)}</div>
                 <button onclick="removeFromCart(${item.id})" class="btn btn-remove">Remove</button>
             </div>
         </div>
@@ -574,7 +600,8 @@ function displayDashboardStats(stats) {
             </div>
             <div class="stat-card">
                 <h3>Total Revenue</h3>
-                <div class="stat-number">$${parseFloat(stats.totalRevenue).toFixed(2)}</div>
+                <!-- Converted to INR -->
+                <div class="stat-number">₹${parseFloat(stats.totalRevenue).toFixed(2)}</div>
             </div>
             <div class="stat-card">
                 <h3>Pending Orders</h3>
@@ -587,6 +614,7 @@ function displayDashboardStats(stats) {
         </div>
     `;
 }
+
 
 async function loadAdminProducts() {
     try {
@@ -604,7 +632,7 @@ function displayAdminProducts(products) {
     container.innerHTML = products.map(product => `
         <div class="admin-product-item">
             <div class="admin-product-image">
-                <img src="${product.imageUrl || PLACEHOLDER_IMAGE}" 
+                <img src="${getProductImageUrl(product)}" 
                      alt="${product.name}"
                      onerror="handleImageError(this)"
                      style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;">
@@ -813,10 +841,19 @@ function removeImagePreview() {
 
 // Function to get image URL for products (from database or fallback)
 function getProductImageUrl(product) {
-    if (product.imageData) {
+    if (product.hasImage) {
         return `${API_BASE}/images/product/${product.id}`;
     }
     return product.imageUrl || PLACEHOLDER_IMAGE;
+}
+
+// Function to format price in Indian Rupees
+function formatPrice(price) {
+    const numPrice = parseFloat(price);
+    return `₹${numPrice.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
 }
 
 // Keep original loadProducts for backward compatibility

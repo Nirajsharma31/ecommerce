@@ -115,6 +115,11 @@ public class Product {
     public String getImageType() { return imageType; }
     public void setImageType(String imageType) { this.imageType = imageType; }
     
+    // Helper method to check if product has database image (will be included in JSON)
+    public boolean getHasImage() {
+        return imageData != null && imageData.length > 0;
+    }
+    
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
