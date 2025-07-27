@@ -84,6 +84,17 @@ public class ProductController {
             @RequestParam(value = "image", required = false) MultipartFile image) {
 
         Map<String, Object> response = new HashMap<>();
+        System.out.println("=== DEBUG: Creating product with image ===");
+        System.out.println("Name: " + name);
+        System.out.println("Description: " + description);
+        System.out.println("Price: " + price);
+        System.out.println("Stock: " + stockQuantity);
+        System.out.println("Category: " + category);
+        System.out.println("Brand: " + brand);
+        if (image != null) {
+            System.out.println("Image: " + image.getOriginalFilename() + " (" + image.getSize() + " bytes)");
+        }
+
         try {
             Product product = new Product();
             product.setName(name);
@@ -93,37 +104,48 @@ public class ProductController {
             product.setCategory(category);
             product.setBrand(brand);
 
+            // Handle image upload
             if (image != null && !image.isEmpty()) {
-                if (!image.getContentType().startsWith("image/")) {
+                String contentType = image.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
                     response.put("error", "Only image files are allowed");
                     return ResponseEntity.badRequest().body(response);
                 }
+
                 if (image.getSize() > 5 * 1024 * 1024) {
                     response.put("error", "File size must be less than 5MB");
                     return ResponseEntity.badRequest().body(response);
                 }
 
-                byte[] imageBytes = image.getBytes();
-                if (imageBytes.length > 10 * 1024 * 1024) {
-                    response.put("error", "Image is too large for database storage");
-                    return ResponseEntity.badRequest().body(response);
-                }
+                try {
+                    byte[] imageBytes = image.getBytes();
 
-                product.setImageData(imageBytes);
-                product.setImageName(image.getOriginalFilename());
-                product.setImageType(image.getContentType());
+                    if (imageBytes.length > 10 * 1024 * 1024) {
+                        response.put("error", "Image is too large for database storage");
+                        return ResponseEntity.badRequest().body(response);
+                    }
+
+                    product.setImageData(imageBytes);
+                    product.setImageName(image.getOriginalFilename());
+                    product.setImageType(contentType);
+                } catch (IOException ex) {
+                    System.err.println("=== IO ERROR: Failed to process image ===");
+                    ex.printStackTrace();
+                    response.put("error", "Failed to process image: " + ex.getMessage());
+                    return ResponseEntity.status(500).body(response);
+                }
             }
 
             Product savedProduct = productService.saveProduct(product);
             response.put("message", "Product created successfully");
             response.put("product", savedProduct);
             return ResponseEntity.ok(response);
-        } catch (IOException e) {
-            response.put("error", "Failed to process image: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+
         } catch (Exception e) {
+            System.err.println("=== ERROR: Failed to create product ===");
+            e.printStackTrace();
             response.put("error", "Failed to create product: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(500).body(response);
         }
     }
 
@@ -148,6 +170,77 @@ public class ProductController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+    
+    @PutMapping("/{id}/update-with-image")
+    public ResponseEntity<Map<String, Object>> updateProductWithImage(
+            @PathVariable Long id,
+            @RequestParam("name") String name,
+            @RequestParam("description") String description,
+            @RequestParam("price") BigDecimal price,
+            @RequestParam("stockQuantity") Integer stockQuantity,
+            @RequestParam("category") String category,
+            @RequestParam(value = "brand", required = false) String brand,
+            @RequestParam(value = "image", required = false) MultipartFile image) {
+
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Optional<Product> existingProductOpt = productService.getProductById(id);
+            if (!existingProductOpt.isPresent()) {
+                response.put("error", "Product not found");
+                return ResponseEntity.notFound().build();
+            }
+
+            Product existingProduct = existingProductOpt.get();
+
+            // Update product info
+            existingProduct.setName(name);
+            existingProduct.setDescription(description);
+            existingProduct.setPrice(price);
+            existingProduct.setStockQuantity(stockQuantity);
+            existingProduct.setCategory(category);
+            existingProduct.setBrand(brand);
+
+            // Handle image
+            if (image != null && !image.isEmpty()) {
+                String contentType = image.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    response.put("error", "Only image files are allowed");
+                    return ResponseEntity.badRequest().body(response);
+                }
+
+                if (image.getSize() > 5 * 1024 * 1024) {
+                    response.put("error", "File size must be less than 5MB");
+                    return ResponseEntity.badRequest().body(response);
+                }
+
+                try {
+                    byte[] imageBytes = image.getBytes();
+                    if (imageBytes.length > 10 * 1024 * 1024) {
+                        response.put("error", "Image is too large for database storage");
+                        return ResponseEntity.badRequest().body(response);
+                    }
+                    existingProduct.setImageData(imageBytes);
+                    existingProduct.setImageName(image.getOriginalFilename());
+                    existingProduct.setImageType(contentType);
+                } catch (IOException ex) {
+                    response.put("error", "Failed to process image: " + ex.getMessage());
+                    return ResponseEntity.status(500).body(response);
+                }
+            }
+
+            Product updatedProduct = productService.updateProduct(existingProduct);
+            response.put("message", "Product updated successfully");
+            response.put("product", updatedProduct);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("=== ERROR: Failed to update product ===");
+            e.printStackTrace();
+            response.put("error", "Failed to update product: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteProduct(@PathVariable Long id) {

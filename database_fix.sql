@@ -9,5 +9,12 @@ DESCRIBE products;
 -- Alter the image_data column to LONGBLOB to support larger images
 ALTER TABLE products MODIFY COLUMN image_data LONGBLOB;
 
--- Verify the change
+-- Also ensure other image columns exist
+ALTER TABLE products ADD COLUMN IF NOT EXISTS image_name VARCHAR(255);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS image_type VARCHAR(100);
+
+-- Verify the changes
 DESCRIBE products;
+
+-- Check if there are any constraint issues
+SHOW CREATE TABLE products;

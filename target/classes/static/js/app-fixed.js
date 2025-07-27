@@ -65,9 +65,25 @@ function setupEventListeners() {
 
     // Image upload preview
     document.getElementById('product-image').addEventListener('change', handleImagePreview);
-    
+
     // Remove image button
     document.getElementById('remove-image').addEventListener('click', removeImagePreview);
+
+    // Edit product form
+    document.getElementById('edit-product-form').addEventListener('submit', handleEditProduct);
+
+    // Edit image upload preview
+    document.getElementById('edit-product-image').addEventListener('change', handleEditImagePreview);
+
+    // Edit remove image button
+    document.getElementById('edit-remove-image').addEventListener('click', removeEditImagePreview);
+
+    // Close modal when clicking outside
+    document.getElementById('edit-product-modal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeEditModal();
+        }
+    });
 }
 
 // Navigation functions
@@ -233,12 +249,8 @@ function displayHomeProducts(products) {
                 <img src="${getProductImageUrl(product)}" 
                      alt="${product.name}"
                      onerror="handleImageError(this)">
-                ${product.stockQuantity <= 5 && product.stockQuantity > 0 
-                    ? '<div class="low-stock-badge">Low Stock</div>' 
-                    : ''}
-                ${product.stockQuantity === 0 
-                    ? '<div class="out-of-stock-badge">Out of Stock</div>' 
-                    : ''}
+                ${product.stockQuantity <= 5 && product.stockQuantity > 0 ? '<div class="low-stock-badge">Low Stock</div>' : ''}
+                ${product.stockQuantity === 0 ? '<div class="out-of-stock-badge">Out of Stock</div>' : ''}
             </div>
             <div class="product-info">
                 <h3>${product.name}</h3>
@@ -247,18 +259,11 @@ function displayHomeProducts(products) {
                     <span class="product-category">${product.category || 'Uncategorized'}</span>
                     ${product.brand ? `<span class="product-brand">${product.brand}</span>` : ''}
                 </div>
-                
-                <!-- CHANGE CURRENCY SYMBOL HERE -->
-                <!-- Replaced $ with ₹ -->
-                <div class="product-price">₹${parseFloat(product.price).toFixed(2)}</div>
-                
+                <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
                 <div class="product-stock">
-                    ${product.stockQuantity > 0 
-                        ? `${product.stockQuantity} in stock` 
-                        : 'Out of stock'}
+                    ${product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
                 </div>
-                <button onclick="addToCart(${product.id})" 
-                        class="btn btn-primary add-to-cart-btn" 
+                <button onclick="addToCart(${product.id})" class="btn btn-primary add-to-cart-btn" 
                         ${product.stockQuantity === 0 ? 'disabled' : ''}>
                     ${product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
                 </button>
@@ -266,7 +271,6 @@ function displayHomeProducts(products) {
         </div>
     `).join('');
 }
-
 
 function displayAllProducts(products) {
     const container = document.getElementById('all-products-container');
@@ -278,12 +282,8 @@ function displayAllProducts(products) {
                 <img src="${getProductImageUrl(product)}" 
                      alt="${product.name}"
                      onerror="handleImageError(this)">
-                ${product.stockQuantity <= 5 && product.stockQuantity > 0 
-                    ? '<div class="low-stock-badge">Low Stock</div>' 
-                    : ''}
-                ${product.stockQuantity === 0 
-                    ? '<div class="out-of-stock-badge">Out of Stock</div>' 
-                    : ''}
+                ${product.stockQuantity <= 5 && product.stockQuantity > 0 ? '<div class="low-stock-badge">Low Stock</div>' : ''}
+                ${product.stockQuantity === 0 ? '<div class="out-of-stock-badge">Out of Stock</div>' : ''}
             </div>
             <div class="product-info">
                 <h3>${product.name}</h3>
@@ -292,18 +292,11 @@ function displayAllProducts(products) {
                     <span class="product-category">${product.category || 'Uncategorized'}</span>
                     ${product.brand ? `<span class="product-brand">${product.brand}</span>` : ''}
                 </div>
-                
-                <!-- CHANGE CURRENCY SYMBOL HERE -->
-                <!-- Replace $ with ₹ -->
-                <div class="product-price">₹${parseFloat(product.price).toFixed(2)}</div>
-                
+                <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
                 <div class="product-stock">
-                    ${product.stockQuantity > 0 
-                        ? `${product.stockQuantity} in stock` 
-                        : 'Out of stock'}
+                    ${product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
                 </div>
-                <button onclick="addToCart(${product.id})" 
-                        class="btn btn-primary add-to-cart-btn" 
+                <button onclick="addToCart(${product.id})" class="btn btn-primary add-to-cart-btn" 
                         ${product.stockQuantity === 0 ? 'disabled' : ''}>
                     ${product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
                 </button>
@@ -311,7 +304,6 @@ function displayAllProducts(products) {
         </div>
     `).join('');
 }
-
 
 // Homepage specific functions
 async function searchProductsFromHero() {
@@ -439,8 +431,7 @@ function displayCartItems() {
             </div>
             <div class="cart-item-info">
                 <h4>${item.product.name}</h4>
-                <!-- Price updated to INR -->
-                <p class="item-price">₹${parseFloat(item.product.price).toFixed(2)}</p>
+                <p class="item-price">$${parseFloat(item.product.price).toFixed(2)}</p>
                 <p class="item-category">${item.product.category || 'Uncategorized'}</p>
             </div>
             <div class="cart-item-controls">
@@ -451,8 +442,7 @@ function displayCartItems() {
                            onchange="updateCartItemQuantity(${item.id}, this.value)">
                     <button onclick="updateCartItemQuantity(${item.id}, ${item.quantity + 1})" class="qty-btn">+</button>
                 </div>
-                <!-- Total price per item updated to INR -->
-                <div class="item-total">₹${(parseFloat(item.product.price) * item.quantity).toFixed(2)}</div>
+                <div class="item-total">$${(parseFloat(item.product.price) * item.quantity).toFixed(2)}</div>
                 <button onclick="removeFromCart(${item.id})" class="btn btn-remove">Remove</button>
             </div>
         </div>
@@ -600,8 +590,7 @@ function displayDashboardStats(stats) {
             </div>
             <div class="stat-card">
                 <h3>Total Revenue</h3>
-                <!-- Converted to INR -->
-                <div class="stat-number">₹${parseFloat(stats.totalRevenue).toFixed(2)}</div>
+                <div class="stat-number">$${parseFloat(stats.totalRevenue).toFixed(2)}</div>
             </div>
             <div class="stat-card">
                 <h3>Pending Orders</h3>
@@ -614,7 +603,6 @@ function displayDashboardStats(stats) {
         </div>
     `;
 }
-
 
 async function loadAdminProducts() {
     try {
@@ -660,7 +648,7 @@ async function handleAddProduct(e) {
     formData.append('stockQuantity', document.getElementById('product-stock').value);
     formData.append('category', document.getElementById('product-category').value);
     formData.append('brand', document.getElementById('product-brand').value);
-    
+
     const imageFile = document.getElementById('product-image').files[0];
     if (imageFile) {
         formData.append('image', imageFile);
@@ -773,8 +761,127 @@ async function updateOrderStatus(orderId, status) {
     }
 }
 
-function editProduct(productId) {
-    showAlert('Edit functionality coming soon!', 'info');
+async function editProduct(productId) {
+    try {
+        // Fetch product details
+        const response = await fetch(`${API_BASE}/products/${productId}`);
+        const product = await response.json();
+
+        if (response.ok) {
+            // Populate the edit form
+            document.getElementById('edit-product-id').value = product.id;
+            document.getElementById('edit-product-name').value = product.name;
+            document.getElementById('edit-product-brand').value = product.brand || '';
+            document.getElementById('edit-product-description').value = product.description || '';
+            document.getElementById('edit-product-price').value = product.price;
+            document.getElementById('edit-product-stock').value = product.stockQuantity;
+            document.getElementById('edit-product-category').value = product.category || '';
+
+            // Show current image if exists
+            const currentImageDisplay = document.getElementById('current-image-display');
+            const currentProductImage = document.getElementById('current-product-image');
+
+            if (product.hasImage) {
+                currentProductImage.src = getProductImageUrl(product);
+                currentImageDisplay.style.display = 'block';
+            } else {
+                currentImageDisplay.style.display = 'none';
+            }
+
+            // Clear any previous image preview
+            document.getElementById('edit-product-image').value = '';
+            document.getElementById('edit-image-preview').style.display = 'none';
+
+            // Show the modal
+            document.getElementById('edit-product-modal').style.display = 'flex';
+        } else {
+            showAlert('Failed to load product details', 'error');
+        }
+    } catch (error) {
+        showAlert('Network error. Please try again.', 'error');
+    }
+}
+
+function closeEditModal() {
+    document.getElementById('edit-product-modal').style.display = 'none';
+    document.getElementById('edit-product-form').reset();
+    document.getElementById('edit-image-preview').style.display = 'none';
+    document.getElementById('current-image-display').style.display = 'none';
+}
+
+async function handleEditProduct(e) {
+    e.preventDefault();
+
+    const productId = document.getElementById('edit-product-id').value;
+    const formData = new FormData();
+
+    formData.append('name', document.getElementById('edit-product-name').value);
+    formData.append('description', document.getElementById('edit-product-description').value);
+    formData.append('price', document.getElementById('edit-product-price').value);
+    formData.append('stockQuantity', document.getElementById('edit-product-stock').value);
+    formData.append('category', document.getElementById('edit-product-category').value);
+    formData.append('brand', document.getElementById('edit-product-brand').value);
+
+    const imageFile = document.getElementById('edit-product-image').files[0];
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/products/${productId}/update-with-image`, {
+            method: 'PUT',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showAlert('Product updated successfully!', 'success');
+            closeEditModal();
+            loadAdminProducts();
+            loadHomeProducts();
+        } else {
+            showAlert(data.error || 'Failed to update product', 'error');
+        }
+    } catch (error) {
+        showAlert('Network error. Please try again.', 'error');
+    }
+}
+
+function handleEditImagePreview(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('edit-image-preview');
+    const previewImg = document.getElementById('edit-preview-img');
+
+    if (file) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            showAlert('Please select an image file', 'error');
+            event.target.value = '';
+            return;
+        }
+
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showAlert('Image size must be less than 5MB', 'error');
+            event.target.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+function removeEditImagePreview() {
+    document.getElementById('edit-product-image').value = '';
+    document.getElementById('edit-image-preview').style.display = 'none';
 }
 
 // Utility functions
@@ -807,7 +914,7 @@ function handleImagePreview(event) {
     const file = event.target.files[0];
     const preview = document.getElementById('image-preview');
     const previewImg = document.getElementById('preview-img');
-    
+
     if (file) {
         // Validate file type
         if (!file.type.startsWith('image/')) {
@@ -815,16 +922,16 @@ function handleImagePreview(event) {
             event.target.value = '';
             return;
         }
-        
+
         // Validate file size (5MB)
         if (file.size > 5 * 1024 * 1024) {
             showAlert('Image size must be less than 5MB', 'error');
             event.target.value = '';
             return;
         }
-        
+
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             previewImg.src = e.target.result;
             preview.style.display = 'block';
         };
