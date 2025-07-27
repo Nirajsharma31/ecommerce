@@ -196,12 +196,29 @@ async function handleRegister(e) {
     }
 }
 
-function logout() {
+async function logout() {
+    if (currentUser) {
+        try {
+            // Clear cart from database before logging out
+            await fetch(`${API_BASE}/cart/clear/${currentUser.id}`, {
+                method: 'DELETE'
+            });
+        } catch (error) {
+            console.error('Failed to clear cart on logout:', error);
+            // Continue with logout even if cart clearing fails
+        }
+    }
+    
+    // Clear local data
     currentUser = null;
     cartItems = [];
     localStorage.removeItem('currentUser');
     updateUIForLoggedOutUser();
     showSection('home');
+    
+    // Update cart display
+    updateCartCount();
+    
     showAlert('Logged out successfully!', 'success');
 }
 
